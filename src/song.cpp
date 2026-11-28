@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <unordered_map>
+#include <unordered_set>
 
 // Helper: Parses a single CSV line
 static std::vector<std::string> parseCSVLine(const std::string& line) {
@@ -103,13 +104,24 @@ void topNTracks(const std::vector<Song>& songs, int n, const std::string& attrib
 		return;
 	}
 
-	int count = std::min(n, static_cast<int>(songs.size()));
-	std::cout << "Top " << count << " tracks:" << std::endl;
+	std::unordered_set<std::string> seen;
+	int shown = 0;
+	
+	std::cout << "Top " << n << " tracks:" << std::endl;
 
-	for (int i = 0; i < count; i++) {
+	for (size_t i = 0; i < songs.size() && shown < n; i++) {
 		const Song& s = songs[i];
-		std::cout << (i + 1) << ". " << s.track_name << " - " << s.artists << " (";
 
+		// Combine track_name and artists as a unique key (using '|' as delimiter)
+		// prevents collisions between two different name/artist pairs
+		std::string key = s.track_name + "|" + s.artists;
+		if (seen.count(key))
+			continue; // Skip duplicate song
+		seen.insert(key);
+		shown++;
+		
+		std::cout << shown << ". " << s.track_name << " - " << s.artists << " ("; 
+		
 		if (attribute == "popularity")
 			std::cout << "popularity: " << s.popularity;
 		else if (attribute == "danceability")
